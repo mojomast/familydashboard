@@ -6,6 +6,7 @@ import MealPlanner from './components/MealPlanner';
 import { useEffect, useState } from 'react';
 import { loadTasks, saveTasks } from './lib/storage';
 import type { Task } from './types';
+import { createDAL } from './lib/dal';
 
 type Tab = 'dashboard' | 'planner' | 'tasks';
 
@@ -13,11 +14,20 @@ function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [editing, setEditing] = useState<Task | null>(null);
   const [tab, setTab] = useState<Tab>('dashboard');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('theme') as 'light' | 'dark') || 'light');
+  const dal = createDAL();
 
   useEffect(() => {
-    const loaded = loadTasks();
-    if (loaded && loaded.length) setTasks(loaded);
-    else setTasks(sampleTasks);
+    // Prefer backend tasks; fall back to local sample if error
+    (async () => {
+      try {
+        const remote = await dal.getTasks();
+        setTasks(remote && remote.length ? remote : sampleTasks);
+      } catch (e) {
+        const loaded = loadTasks();
+        setTasks(loaded && loaded.length ? loaded : sampleTasks);
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -34,9 +44,16 @@ function App() {
     return () => window.removeEventListener('familydashboard:task-added', handler as any);
   }, []);
 
-  const handleCreate = (t: Task) => setTasks((s) => [t, ...s]);
-  const handleUpdate = (t: Task) => setTasks((s) => s.map((x) => (x.id === t.id ? t : x)));
-  const handleDelete = (taskId: string) => setTasks((s) => s.filter((x) => x.id !== taskId));
+  const handleCreate = async (t: Task) => {
+    try { const saved = await dal.createTask(t); setTasks((s) => [saved, ...s]); } catch { setTasks((s) => [t, ...s]); }
+  };
+  const handleUpdate = async (t: Task) => {
+    try { const saved = await dal.updateTask(t); setTasks((s) => s.map((x) => (x.id === saved.id ? saved : x))); } catch { setTasks((s) => s.map((x) => (x.id === t.id ? t : x))); }
+  };
+  const handleDelete = async (taskId: string) => {
+    setTasks((s) => s.filter((x) => x.id !== taskId));
+    try { await dal.deleteTask(taskId); } catch { /* ignore */ }
+  };
   const handleEdit = (taskId: string) => {
     const t = tasks.find((x) => x.id === taskId) || null;
     setEditing(t);
@@ -48,9 +65,13 @@ function App() {
   };
 
   return (
-    <div className="App">
+    <div className={`App theme-${theme}`}>
       <header>
         <h1>Family Dashboard</h1>
+        <div aria-label="Theme toggle" role="group" style={{ position: 'absolute', right: 12, top: 8 }}>
+          <button aria-pressed={theme==='light'} className={`small-btn ${theme==='light'?'active':''}`} onClick={() => { setTheme('light'); localStorage.setItem('theme','light'); }}>Light</button>
+          <button aria-pressed={theme==='dark'} className={`small-btn ${theme==='dark'?'active':''}`} onClick={() => { setTheme('dark'); localStorage.setItem('theme','dark'); }}>Dark</button>
+        </div>
       </header>
       <div className="tabs">
         <button className={`tab-button ${tab === 'dashboard' ? 'active' : ''}`} onClick={() => setTab('dashboard')}>Dashboard</button>

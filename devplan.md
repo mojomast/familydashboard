@@ -233,5 +233,113 @@ npx eslint "src/**/*.{ts,tsx}"
 - [in-progress] Add quick-add (+) buttons per column/day and 7-day meal edit flow — automated agent 2025-08-21
 - [done] Added `MealPlanner` UI for editing next 7 days of meals inline and wired + buttons — automated agent 2025-08-21
 
+---
+
+## Phase 2 — Enhancements Roadmap (requested)
+
+High-level goals: richer data layer (SQLite), better UX and customization, improved planning, grocery checklists for meals, mobile-first PWA, QR code for easy mobile access, and strong quality gates.
+
+### Storage: SQLite adoption
+- [todo] Decide storage approach and spike a prototype
+  - Option A (client-only): SQLite WASM in the browser with OPFS
+    - Libraries: `@sqlite.org/sqlite-wasm`, `drizzle-orm` (driver: `sql.js`/`wa-sqlite`), or `absurd-sql`
+    - Pros: no backend required, works offline; Cons: browser support nuances, bundle size
+  - Option B (backend): Node/Express + `better-sqlite3` (or `sqlite3`)
+    - Pros: robust and sharable across devices; Cons: requires hosting and API
+- [todo] Schema v2 (works for both A and B)
+  - tables
+    - tasks(id PK, title, notes, created_at, type, due_date, category, assigned_to, archived INT)
+    - recurrences(task_id FK, days INT bitmask, start_date, end_date)
+    - completions(id PK, task_id FK, completed_at, instance_date)
+    - notes(date_iso PK, content)
+    - groceries(id PK, date_iso, label, done INT, meal_task_id FK NULL)
+    - settings(key PK, value)
+- [todo] Migration from localStorage
+  - Read existing keys (tasks, completions, notes), transform, and insert into SQLite on first run
+  - Keep a migration flag in `settings` to avoid repeats
+- [todo] Data access layer
+  - Introduce a DAL with methods: `getTasks`, `saveTask`, `deleteTask`, `getInstancesByDate`, `toggleCompletion`, `notes`, `groceries`
+  - Provide two adapters (LocalStorageAdapter existing, SqliteAdapter new)
+
+### Visual/UX improvements
+- [todo] Adopt a UI framework for consistency and speed
+  - Option: Tailwind CSS (utility-first) + Radix Primitives for accessible components
+  - Alternative: Mantine UI or Chakra UI for batteries-included components
+- [todo] Polish layout
+  - Responsive mobile-first layout (1-column stack), tablet (2–3 cols), desktop (5-day grid)
+  - Sticky day headers, better spacing, clear hierarchy
+- [todo] Theming
+  - CSS variables for colors, spacing, radii; light/dark modes
+  - Settings page toggle and persisted preference
+- [todo] Accessibility
+  - Keyboard navigation, focus states, ARIA roles/labels, color contrast checks
+
+### Customization (styles, labels, categories)
+- [todo] Customizable category labels and colors
+  - Settings UI to rename categories (Meals/Chores/Other -> user-defined)
+  - Color pickers per category, persisted
+- [todo] Tagging
+  - Add freeform tags on tasks; filter by tag/person/category
+- [todo] People/Assignees
+  - Manage household members; assign tasks; filter by person
+
+### Improved schedule planning
+- [todo] Multi-week views (7/14 days, month glance)
+- [todo] Drag-and-drop between days/columns (dnd-kit)
+- [todo] Quick actions: duplicate, postpone, snooze, archive
+- [todo] Calendar export (ICS) for a person or category
+
+### Meal planning + grocery checklists
+- [todo] Attach grocery checklist to meal tasks
+  - Per day: quick-add items, mark done, reorder
+- [todo] Meal templates
+  - Save a meal with its grocery list as a reusable template; apply to a date
+- [todo] Pantry integration (optional)
+  - Maintain pantry staples, auto-suggest groceries
+
+### Mobile compatibility and PWA
+- [todo] Responsive CSS as above
+- [todo] PWA: add `manifest.json`, icons, service worker (Vite Plugin PWA)
+- [todo] Offline support (pairs well with SQLite WASM)
+
+### QR code for quick mobile access
+- [todo] Add a “Share to phone” button showing a QR code of the current URL
+  - Library: `qrcode.react` or `qrcode`
+  - Copy/share link helpers where supported
+
+### Quality, testing, and CI
+- [todo] Expand unit tests: storage DAL, recurrence edge cases, migration script
+- [todo] Component tests: TaskList toggles, WeekView layout, MealPlanner
+- [todo] E2E tests: basic flows on mobile viewport (Playwright)
+- [todo] GitHub Actions: install, build, lint, test matrix on Node LTS
+
+### Performance
+- [todo] Virtualized lists if tasks grow (react-virtual)
+- [todo] Code-splitting and route-based chunks
+- [todo] SQLite WASM lazy-loading and caching
+
+### Security and privacy
+- [todo] Optional PIN lock for the app on shared devices
+- [todo] Redact personal data in exported JSON by default
+
+---
+
+## Phase 2 Requirements checklist (mapping to request)
+- [todo] SQLite for storing data (client or server) + migration
+- [todo] Visual and QoL improvements via UI framework(s)
+- [todo] Further customization of styles and labels
+- [todo] Improved schedule planning (multi-week, drag-and-drop)
+- [todo] Grocery list checklists attached to meal plans
+- [todo] Mobile compatibility and PWA
+- [todo] QR code for quick access on mobile
+- [todo] Additional suggestions implemented (tags, assignees, ICS export)
+
+---
+
+## Today’s planning updates (2025-08-21)
+- [done] Wrote Phase 2 roadmap with concrete options for SQLite (client/server), UX framework choices, customization, advanced planning, grocery checklists, mobile/PWA, QR, testing and performance
+- [done] Added v2 schema proposal and migration outline
+- [done] Added DAL adapter plan to keep storage pluggable
+
 
 

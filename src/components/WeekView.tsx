@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { instancesForDate } from '../lib/recurrence';
 import type { Task } from '../types';
 import TaskList from './TaskList';
-import { loadNotes, saveNote } from '../lib/storage';
+import { createDAL } from '../lib/dal';
 
 export const WeekView: React.FC<{
   tasks: Task[];
@@ -24,7 +24,19 @@ export const WeekView: React.FC<{
     days.push(d);
   }
 
-  const [notesStore, setNotesStore] = useState<Record<string, string>>(() => loadNotes());
+  const dal = createDAL();
+  const [notesStore, setNotesStore] = useState<Record<string, string>>({});
+  useEffect(() => {
+    // Preload notes for visible days
+    (async () => {
+      const entries: Record<string, string> = {};
+      for (const d of days) {
+        const iso = d.toISOString().slice(0, 10);
+        try { entries[iso] = await dal.getNote(iso); } catch { entries[iso] = ''; }
+      }
+      setNotesStore(entries);
+    })();
+  }, []);
 
   // expanded state per day (notes visible). Default to true when a note exists, false otherwise.
   const initialExpanded: Record<string, boolean> = {};
@@ -77,16 +89,14 @@ export const WeekView: React.FC<{
                   className="day-note"
                   aria-label={`Notes for ${iso}`}
                   defaultValue={notesStore[iso] ?? ''}
-                  onBlur={(e) => {
+                  onBlur={async (e) => {
                     const v = e.currentTarget.value;
-                    saveNote(iso, v);
+                    try { await dal.saveNote(iso, v); } catch { /* ignore */ }
                     setNotesStore((s) => {
                       const next = { ...s };
-                      if (v.trim()) next[iso] = v;
-                      else delete next[iso];
+                      if (v.trim()) next[iso] = v; else delete next[iso];
                       return next;
                     });
-                    // ensure expanded reflects presence of content
                     setExpanded((s) => ({ ...s, [iso]: Boolean(v && v.trim()) }));
                   }}
                   rows={2}

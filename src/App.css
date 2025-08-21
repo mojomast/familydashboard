@@ -8,15 +8,35 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Segoe UI Mono', monospace;
-  font-size: 13px;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  font-size: 14px;
 }
 
+:root {
+  --bg: #ffffff;
+  --surface: #f7f7f8;
+  --border: #e6e6e6;
+  --text: #111827;
+  --muted: #6b7280;
+  --primary: #4f46e5;
+}
+.theme-dark {
+  --bg: #0b1220;
+  --surface: #0f172a;
+  --border: #1f2937;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --primary: #818cf8;
+}
+
+body, .App { background: var(--bg); color: var(--text); }
+
 header {
-  padding: 6px 8px;
-  background: #f7f7f8;
-  border-bottom: 1px solid #e6e6e6;
+  padding: 8px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
   text-align: center;
+  position: relative;
 }
 
 header h1 {
@@ -49,8 +69,8 @@ main {
 }
 
 .tab-button.active {
-  border-color: #ddd;
-  background: #f2f2f2;
+  border-color: var(--border);
+  background: rgba(79,70,229,0.08);
 }
 .tab-content {
   flex: 1 1 auto;
@@ -156,7 +176,7 @@ main {
 /* .week-rows is defined above (keeps small auto header row + 5 flexible rows) */
 
 .day-row {
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--border);
   padding: 4px;
   display: flex;
   flex-direction: column;
@@ -217,8 +237,8 @@ main {
 }
 
 .note-toggle-bottom {
-  background: #fff;
-  border: 1px solid #ddd;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 2px 6px;
   cursor: pointer;
@@ -235,8 +255,8 @@ main {
   right: 16px;
   bottom: 16px;
   width: 320px;
-  background: #fff;
-  border: 1px solid #ddd;
+  background: var(--bg);
+  border: 1px solid var(--border);
   padding: 8px;
   box-shadow: 0 6px 24px rgba(0,0,0,0.08);
   z-index: 40;
@@ -334,7 +354,7 @@ textarea.day-note {
   gap: 8px;
 }
 .task-date {
-  color: #666;
+  color: var(--muted);
   font-size: 0.9em;
 }
 .task-controls {
@@ -350,5 +370,12 @@ textarea.day-note {
   padding: 4px;
 }
 .no-tasks {
-  color: #666;
+  color: var(--muted);
+}
+
+/* Responsive layout */
+@media (max-width: 900px) {
+  .dashboard-grid { grid-template-columns: 1fr; height: auto; }
+  .week-rows { grid-template-rows: none; height: auto; }
+  .day-columns { grid-template-columns: 1fr; }
 }
