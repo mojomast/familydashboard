@@ -1,0 +1,354 @@
+/* Dashboard layout */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Segoe UI Mono', monospace;
+  font-size: 13px;
+}
+
+header {
+  padding: 6px 8px;
+  background: #f7f7f8;
+  border-bottom: 1px solid #e6e6e6;
+  text-align: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  padding: 4px 8px;
+  background: #fff;
+  justify-content: center;
+}
+
+.tab-button {
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.tab-button.active {
+  border-color: #ddd;
+  background: #f2f2f2;
+}
+.tab-content {
+  flex: 1 1 auto;
+  padding: 12px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+
+.column-headers {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 0 auto;
+}
+.col-header {
+  text-align: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.8em;
+  min-height: 20px;
+  line-height: 1;
+}
+.week-rows {
+  display: grid;
+  /* five equal rows for the five days */
+  grid-template-rows: repeat(5, 1fr);
+  gap: 2px;
+  max-width: 1200px;
+  width: 100%;
+  height: calc(100vh - 120px);
+}
+.column-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  flex: 1 1 0;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  min-height: 0;
+}
+.col-meals { background: #fff8f6; color: #8b3d2e; border: 1px solid #ffe6dc; }
+.col-chores { background: #f6fff8; color: #2a7f48; border: 1px solid #dcffdf; }
+.col-other { background: #f3f2ff; color: #4a2e8f; border: 1px solid #ebe9ff; }
+
+.column-cell.col-meals { background: rgba(255,236,230,0.4); }
+.column-cell.col-chores { background: rgba(230,255,236,0.4); }
+.column-cell.col-other { background: rgba(240,236,255,0.4); }
+
+.day-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  /* allow the grid to grow inside the day-row */
+  flex: 1 1 auto;
+  align-items: stretch;
+}
+
+.cell-add {
+  background: transparent;
+  border: none;
+  font-size: 0.9em;
+  margin-bottom: 6px;
+  cursor: pointer;
+  padding: 2px;
+  align-self: center;
+  z-index: 3;
+  pointer-events: auto;
+}
+.row-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1px 0 2px 0;
+}
+
+.column-cell ul {
+  width: 100%;
+  flex: 1 1 auto;
+  overflow: auto;
+  margin: 0;
+  padding: 0 6px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  height: 100%;
+}
+
+.tab-content {
+  /* centered content handled earlier; keep rules simple here */
+  display: flex;
+  justify-content: center;
+}
+
+/* compact row-based layout: each day is a full-width row with 3 columns */
+/* .week-rows is defined above (keeps small auto header row + 5 flexible rows) */
+
+.day-row {
+  border: 1px solid #e8e8e8;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ensure inner flex children can shrink/scroll */
+.day-row {
+  min-height: 0;
+}
+
+.note-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1em;
+}
+
+.day-title {
+  text-align: center;
+  font-weight: 700;
+}
+.day-sub {
+  font-weight: 400;
+  font-size: 0.75em;
+}
+
+.day-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  align-items: stretch;
+  flex: 1 1 auto;
+}
+
+.section-list {
+  /* container area reserved for lists; allow it to grow inside the row */
+  width: 100%;
+}
+
+.notes-area {
+  margin-top: 6px;
+}
+
+.notes-area.collapsed {
+  display: none;
+}
+
+.day-row {
+  position: relative;
+}
+
+.day-footer {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+}
+
+.note-toggle-bottom {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.small-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* floating editor when creating a new task from the dashboard */
+.editor-floating {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 320px;
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 8px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+  z-index: 40;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-card {
+  border: 1px solid #f0f0f0;
+  padding: 4px;
+  min-height: 34px;
+}
+
+/* category label boxes */
+.section-header h5 {
+  margin: 0;
+  font-size: 0.8em;
+  text-align: center;
+}
+.section-header .small-label {
+  display: inline-block;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #f6f0ff;
+  color: #4a2e8f;
+  font-size: 0.8em;
+}
+.section-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.task-title {
+  font-size: 1.12em;
+  font-weight: 600;
+}
+
+textarea.day-note {
+  width: 100%;
+  box-sizing: border-box;
+  height: 2.2rem;
+}
+#root {
+  /* allow full width layout for dashboard */
+  width: 100%;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Task list compact controls */
+.task-item {
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.task-date {
+  color: #666;
+  font-size: 0.9em;
+}
+.task-controls {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+.icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+  padding: 4px;
+}
+.no-tasks {
+  color: #666;
+}
