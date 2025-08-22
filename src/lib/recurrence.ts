@@ -2,11 +2,41 @@ import type { Task } from '../types';
 
 const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 
-export function instancesForWeek(tasks: Task[], weekStart: Date): Array<{ task: Task; date: string }> {
-  const start = new Date(weekStart);
-  start.setHours(0, 0, 0, 0);
+// Memoization cache for recurrence calculations
+const recurrenceCache = new Map<string, Array<{ task: Task; date: string }>>();
+const CACHE_SIZE_LIMIT = 100;
 
-  const out: Array<{ task: Task; date: string }> = [];
+// Cache key generator
+const generateCacheKey = (tasks: Task[], weekStart: Date): string => {
+  const taskIds = tasks.map(t => t.id).sort().join(',');
+  const weekStartStr = isoDate(weekStart);
+  return `${taskIds}:${weekStartStr}`;
+};
+
+// Cache management
+const cleanupCache = () => {
+  if (recurrenceCache.size > CACHE_SIZE_LIMIT) {
+    const entries = Array.from(recurrenceCache.entries());
+    // Remove oldest 20% of entries
+    const toRemove = Math.floor(entries.length * 0.2);
+    for (let i = 0; i < toRemove; i++) {
+      recurrenceCache.delete(entries[i][0]);
+    }
+  }
+};
+
+export function instancesForWeek(tasks: Task[], weekStart: Date): Array<{ task: Task; date: string }> {
+   // Check cache first
+   const cacheKey = generateCacheKey(tasks, weekStart);
+   const cachedResult = recurrenceCache.get(cacheKey);
+   if (cachedResult) {
+     return cachedResult;
+   }
+
+   const start = new Date(weekStart);
+   start.setHours(0, 0, 0, 0);
+
+   const out: Array<{ task: Task; date: string }> = [];
 
   for (let i = 0; i < 7; i++) {
     const day = new Date(start);
@@ -31,7 +61,34 @@ export function instancesForWeek(tasks: Task[], weekStart: Date): Array<{ task: 
     }
   }
 
+  // Cache the result
+  recurrenceCache.set(cacheKey, out);
+  cleanupCache();
+
   return out;
+}
+
+// Function to clear cache when tasks are updated
+export function clearRecurrenceCache(): void {
+  recurrenceCache.clear();
+}
+
+// Function to invalidate specific cache entries
+export function invalidateRecurrenceCache(taskIds?: string[]): void {
+  if (!taskIds) {
+    clearRecurrenceCache();
+    return;
+  }
+
+  const keysToDelete: string[] = [];
+  for (const [key] of recurrenceCache) {
+    const keyTaskIds = key.split(':')[0].split(',');
+    if (taskIds.some(id => keyTaskIds.includes(id))) {
+      keysToDelete.push(key);
+    }
+  }
+
+  keysToDelete.forEach(key => recurrenceCache.delete(key));
 }
 
 export function nextInstance(task: Task, fromDate = new Date()): Date | null {

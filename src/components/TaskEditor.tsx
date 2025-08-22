@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import type { Task } from '../types';
-import { addTask } from '../lib/storage';
+import React, { useState, useEffect } from 'react';
+import type { Task, UserProfile } from '../types';
+import { createDAL } from '../lib/dal';
 
 type Props = {
   onCreate: (task: Task) => void;
@@ -20,6 +20,23 @@ export const TaskEditor: React.FC<Props> = ({ onCreate, initial = null, onUpdate
   const [dueDate, setDueDate] = useState(initial?.dueDate ?? '');
   const [category, setCategory] = useState<'meals' | 'chores' | 'other'>(initial?.category as 'meals'|'chores'|'other' ?? 'other');
   const [days, setDays] = useState<number[]>(initial?.recurrence?.days ?? [1]);
+  const [assignedTo, setAssignedTo] = useState(initial?.assignedTo ?? '');
+  const [familyMembers, setFamilyMembers] = useState<UserProfile[]>([]);
+
+  const dal = createDAL();
+
+  useEffect(() => {
+    loadFamilyMembers();
+  }, []);
+
+  const loadFamilyMembers = async () => {
+    try {
+      const members = await dal.getUserProfiles();
+      setFamilyMembers(members);
+    } catch (err) {
+      console.warn('Failed to load family members:', err);
+    }
+  };
 
   const toggleDay = (d: number) => {
     setDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]));
@@ -31,8 +48,8 @@ export const TaskEditor: React.FC<Props> = ({ onCreate, initial = null, onUpdate
   const isEdit = Boolean(initial && 'id' in (initial as Record<string, unknown>));
 
     const base: Task = isEdit
-      ? { ...(initial as Task), title: title.trim(), type, category }
-      : ({ id: generateId(), title: title.trim(), createdAt: new Date().toISOString(), type, category } as Task);
+      ? { ...(initial as Task), title: title.trim(), type, category, assignedTo: assignedTo || undefined }
+      : ({ id: generateId(), title: title.trim(), createdAt: new Date().toISOString(), type, category, assignedTo: assignedTo || undefined } as Task);
 
     if (type === 'one-off') {
       if (dueDate) base.dueDate = dueDate;
@@ -45,8 +62,8 @@ export const TaskEditor: React.FC<Props> = ({ onCreate, initial = null, onUpdate
     if (isEdit && onUpdate) onUpdate(base);
     else {
       // persist immediately and notify parent
-  try { addTask(base); } catch { /* ignore */ }
-  try { window.dispatchEvent(new CustomEvent('familydashboard:task-added', { detail: base.id })); } catch { /* ignore */ }
+      try { dal.createTask(base); } catch { /* ignore */ }
+      try { window.dispatchEvent(new CustomEvent('familydashboard:task-added', { detail: base.id })); } catch { /* ignore */ }
       onCreate(base);
     }
 
@@ -66,6 +83,19 @@ export const TaskEditor: React.FC<Props> = ({ onCreate, initial = null, onUpdate
             <option value="meals">Meals</option>
             <option value="chores">Chores</option>
             <option value="other">Other</option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Assign to:
+          <select value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} className="ml-8">
+            <option value="">Unassigned</option>
+            {familyMembers.map((member) => (
+              <option key={member.id} value={member.name}>
+                {member.avatar} {member.name} ({member.role})
+              </option>
+            ))}
           </select>
         </label>
       </div>

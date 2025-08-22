@@ -1,15 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import type { Task } from '../types';
+import type { Task, UserProfile } from '../types';
 import { createDAL } from '../lib/dal';
-import ActionMenu from './ActionMenu';
+import type { DragEndEvent } from '@dnd-kit/core';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { DraggableTask } from './DraggableTask';
 
 export const TaskList: React.FC<{
   tasks: { task: Task; date: string }[];
   onEdit?: (taskId: string) => void;
   onDelete?: (taskId: string) => void;
-}> = ({ tasks, onEdit, onDelete }) => {
+  bulkMode?: boolean;
+  selectedTasks?: Set<string>;
+  onTaskSelect?: (taskId: string) => void;
+}> = ({ tasks, onEdit, onDelete, bulkMode, selectedTasks, onTaskSelect }) => {
   const dal = createDAL();
   const [completedKeys, setCompletedKeys] = useState<Set<string>>(new Set());
+  const [familyMembers, setFamilyMembers] = useState<UserProfile[]>([]);
+
+  // Sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     // Load completed instances for involved dates
@@ -28,8 +54,20 @@ export const TaskList: React.FC<{
         }
         setCompletedKeys(set);
       } catch { /* ignore */ }
-  })();
+   })();
   }, [tasks, dal]);
+
+  useEffect(() => {
+    // Load family members for assignment display
+    (async () => {
+      try {
+        const members = await dal.getUserProfiles();
+        setFamilyMembers(members);
+      } catch (err) {
+        console.warn('Failed to load family members:', err);
+      }
+    })();
+  }, [dal]);
 
   if (!tasks.length) return <div className="no-tasks">No tasks</div>;
 
@@ -47,53 +85,60 @@ export const TaskList: React.FC<{
     }
   };
 
-  const postpone = async (t: Task, fromDateIso: string) => {
-    // move a one-off by one day; for recurring suggest editing; keep simple per request
-    if (t.type === 'one-off' && t.dueDate) {
-      const d = new Date(fromDateIso);
-      d.setDate(d.getDate() + 1);
-      const iso = d.toISOString().slice(0,10);
-      const next = { ...t, dueDate: iso } as Task;
-  try { await dal.updateTask(next); } catch (err) { console.warn('postpone update failed', err); }
-  try { window.dispatchEvent(new CustomEvent('familydashboard:data-changed')); } catch (err) { console.warn('dispatch event failed', err); }
+
+  // Handle drag end event
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = tasks.findIndex(item => `${item.task.id}-${item.date}` === active.id);
+      const newIndex = tasks.findIndex(item => `${item.task.id}-${item.date}` === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        // For now, just log the drag operation
+        // In a full implementation, this would reorder the tasks in the backend
+        console.log(`Dragged task from index ${oldIndex} to ${newIndex}`);
+      }
     }
-  };
-  const duplicate = async (t: Task, dateIso?: string) => {
-    const copy: Task = { ...t, id: `dup-${Date.now()}-${Math.floor(Math.random()*1000)}`, createdAt: new Date().toISOString() };
-    if (dateIso && t.type === 'one-off') copy.dueDate = dateIso;
-  try { await dal.createTask(copy); } catch (err) { console.warn('duplicate create failed', err); }
-  try { window.dispatchEvent(new CustomEvent('familydashboard:data-changed')); } catch {}
-  };
-  const archive = async (t: Task) => {
-  try { await dal.updateTask({ ...t, archived: true }); } catch (err) { console.warn('archive failed', err); }
-  try { window.dispatchEvent(new CustomEvent('familydashboard:data-changed')); } catch {}
   };
 
   return (
-    <ul>
-      {tasks.map((t) => {
-  const completed = completedKeys.has(`${t.task.id}@${t.date}`);
-        return (
-          <li key={`${t.task.id}-${t.date}`} className="task-item">
-            <label>
-              <input type="checkbox" checked={completed} onChange={() => toggle(t.task.id, t.date)} />{' '}
-              <strong className="task-title">{t.task.title}</strong>
-            </label>
-            <div className="task-controls">
-              <ActionMenu
-                items={[
-                  { label: 'Edit', onSelect: () => onEdit && onEdit(t.task.id) },
-                  { label: 'Delete', onSelect: () => onDelete && onDelete(t.task.id) },
-                  { label: 'Postpone', onSelect: () => postpone(t.task, t.date) },
-                  { label: 'Duplicate', onSelect: () => duplicate(t.task, t.date) },
-                  { label: 'Archive', onSelect: () => archive(t.task) },
-                ]}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={tasks.map(t => `${t.task.id}-${t.date}`)}
+        strategy={verticalListSortingStrategy}
+      >
+        <ul>
+          {tasks.map((t) => {
+            const completed = completedKeys.has(`${t.task.id}@${t.date}`);
+            return (
+              <DraggableTask
+                key={`${t.task.id}-${t.date}`}
+                task={t.task}
+                date={t.date}
+                isCompleted={completed}
+                onToggle={() => toggle(t.task.id, t.date)}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                familyMembers={familyMembers.map(m => ({
+                  id: m.id,
+                  name: m.name,
+                  avatar: m.avatar || '👤',
+                  color: m.color
+                }))}
+                bulkMode={bulkMode}
+                isSelected={selectedTasks?.has(t.task.id) || false}
+                onSelect={onTaskSelect}
               />
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+            );
+          })}
+        </ul>
+      </SortableContext>
+    </DndContext>
   );
 };
 

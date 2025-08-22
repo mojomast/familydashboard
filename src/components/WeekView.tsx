@@ -12,7 +12,10 @@ export const WeekView: React.FC<{
   onAdd?: (category: 'meals' | 'chores' | 'other', dateIso: string) => void;
   mode?: 'rows' | 'columns';
   daysCount?: number;
-}> = ({ tasks, weekStart, onEdit, onDelete, onAdd, mode = 'columns', daysCount = 5 }) => {
+  bulkMode?: boolean;
+  selectedTasks?: Set<string>;
+  onTaskSelect?: (taskId: string) => void;
+}> = ({ tasks, weekStart, onEdit, onDelete, onAdd, mode = 'columns', daysCount = 5, bulkMode = false, selectedTasks = new Set(), onTaskSelect }) => {
   const start = weekStart ?? new Date();
   start.setHours(0, 0, 0, 0);
 
@@ -92,15 +95,36 @@ export const WeekView: React.FC<{
               <div className="day-columns">
                 <div className="column-cell col-meals">
                   <button className="cell-add" title={`Add meal for ${iso}`} onClick={() => onAdd && onAdd('meals', iso)}>➕</button>
-                  <TaskList tasks={meals} onEdit={onEdit} onDelete={onDelete} />
+                  <TaskList
+                    tasks={meals}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    bulkMode={bulkMode}
+                    selectedTasks={selectedTasks}
+                    onTaskSelect={onTaskSelect}
+                  />
                 </div>
                 <div className="column-cell col-chores">
                   <button className="cell-add" title={`Add chore for ${iso}`} onClick={() => onAdd && onAdd('chores', iso)}>➕</button>
-                  <TaskList tasks={chores} onEdit={onEdit} onDelete={onDelete} />
+                  <TaskList
+                    tasks={chores}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    bulkMode={bulkMode}
+                    selectedTasks={selectedTasks}
+                    onTaskSelect={onTaskSelect}
+                  />
                 </div>
                 <div className="column-cell col-other">
                   <button className="cell-add" title={`Add other task for ${iso}`} onClick={() => onAdd && onAdd('other', iso)}>➕</button>
-                  <TaskList tasks={other} onEdit={onEdit} onDelete={onDelete} />
+                  <TaskList
+                    tasks={other}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    bulkMode={bulkMode}
+                    selectedTasks={selectedTasks}
+                    onTaskSelect={onTaskSelect}
+                  />
                 </div>
               </div>
               <div className={`notes-area collapsible ${expanded[iso] ? '' : 'collapsed'}`}>
