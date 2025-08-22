@@ -1,34 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import type { Task } from '../types';
-import { addCompletion, removeCompletion, isCompleted } from '../lib/storage';
+import { createDAL } from '../lib/dal';
 
 export const TaskList: React.FC<{
   tasks: { task: Task; date: string }[];
   onEdit?: (taskId: string) => void;
   onDelete?: (taskId: string) => void;
 }> = ({ tasks, onEdit, onDelete }) => {
-  const [, setTick] = useState(0);
+  const dal = createDAL();
+  const [completedKeys, setCompletedKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    // no-op placeholder to allow reactive updates if we later add an event bus
-  }, []);
+    // Load completed instances for involved dates
+    (async () => {
+      try {
+        const perDate = new Map<string, string[]>();
+        for (const it of tasks) {
+          const list = perDate.get(it.date) || [];
+          list.push(it.task.id);
+          perDate.set(it.date, list);
+        }
+        const set = new Set<string>();
+        for (const [dateIso] of perDate) {
+          const comps = await dal.getCompletions(dateIso);
+          for (const c of comps) set.add(`${c.taskId}@${c.instanceDate}`);
+        }
+        setCompletedKeys(set);
+      } catch { /* ignore */ }
+    })();
+  }, [tasks.length]);
 
   if (!tasks.length) return <div className="no-tasks">No tasks</div>;
 
-  const toggle = (taskId: string, dateIso: string) => {
-    const completed = isCompleted(taskId, dateIso);
-    if (completed) {
-      removeCompletion(taskId, dateIso);
+  const toggle = async (taskId: string, dateIso: string) => {
+    const key = `${taskId}@${dateIso}`;
+    const isDone = completedKeys.has(key);
+    if (isDone) {
+      setCompletedKeys((s) => { const n = new Set(s); n.delete(key); return n; });
+      try { await dal.removeCompletion(taskId, dateIso); } catch { /* ignore */ }
     } else {
-      addCompletion({ taskId, completedAt: new Date().toISOString(), instanceDate: dateIso });
+      setCompletedKeys((s) => { const n = new Set(s); n.add(key); return n; });
+      try { await dal.addCompletion({ taskId, instanceDate: dateIso }); } catch { /* ignore */ }
     }
-    setTick((t) => t + 1);
   };
 
   return (
     <ul>
       {tasks.map((t) => {
-        const completed = isCompleted(t.task.id, t.date);
+  const completed = completedKeys.has(`${t.task.id}@${t.date}`);
         return (
           <li key={`${t.task.id}-${t.date}`} className="task-item">
             <label>

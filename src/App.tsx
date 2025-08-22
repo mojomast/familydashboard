@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 import { loadTasks, saveTasks } from './lib/storage';
 import type { Task } from './types';
 import { createDAL } from './lib/dal';
+import QrButton from './components/QrButton';
+import GroceryList from './components/GroceryList';
 
 type Tab = 'dashboard' | 'planner' | 'tasks';
 
@@ -66,9 +68,10 @@ function App() {
 
   return (
     <div className={`App theme-${theme}`}>
-      <header>
+    <header>
         <h1>Family Dashboard</h1>
         <div aria-label="Theme toggle" role="group" style={{ position: 'absolute', right: 12, top: 8 }}>
+      <QrButton />
           <button aria-pressed={theme==='light'} className={`small-btn ${theme==='light'?'active':''}`} onClick={() => { setTheme('light'); localStorage.setItem('theme','light'); }}>Light</button>
           <button aria-pressed={theme==='dark'} className={`small-btn ${theme==='dark'?'active':''}`} onClick={() => { setTheme('dark'); localStorage.setItem('theme','dark'); }}>Dark</button>
         </div>
@@ -82,7 +85,13 @@ function App() {
         <div className="tab-content">
           {tab === 'dashboard' && (
             /* render WeekView directly so it can size itself */
-            <WeekView tasks={tasks} onEdit={handleEdit} onDelete={handleDelete} onAdd={handleAdd} mode="rows" />
+            <div style={{ width: '100%' }}>
+              <WeekView tasks={tasks} onEdit={handleEdit} onDelete={handleDelete} onAdd={handleAdd} mode="rows" />
+              <div style={{ maxWidth: 600, margin: '12px auto' }}>
+                <h3 style={{ textAlign: 'center' }}>Today’s Groceries</h3>
+                <GroceryList dateIso={new Date().toISOString().slice(0,10)} />
+              </div>
+            </div>
           )}
 
           {tab === 'planner' && (

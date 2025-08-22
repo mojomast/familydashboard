@@ -105,7 +105,7 @@ export const WeekView: React.FC<{
               <div className="day-footer">
                 <button
                   className="note-toggle-bottom"
-                  aria-expanded={expanded[iso] ? 'true' : 'false'}
+                  aria-expanded={expanded[iso]}
                   title="Toggle notes"
                   onClick={() => setExpanded((s) => ({ ...s, [iso]: !s[iso] }))}
                 >＋</button>

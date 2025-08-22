@@ -379,3 +379,6 @@ textarea.day-note {
   .week-rows { grid-template-rows: none; height: auto; }
   .day-columns { grid-template-columns: 1fr; }
 }
+
+/* utilities */
+.hstack-6 { display: flex; gap: 6px; align-items: center; }
