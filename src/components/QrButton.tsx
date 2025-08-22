@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
+import QRCode from 'react-qr-code';
 
 export const QrButton: React.FC = () => {
   const [open, setOpen] = useState(false);
   const url = window.location.origin;
 
   return (
-    <div style={{ position: 'relative' }}>
-      <button className="small-btn" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(!open)} title="Show QR to open on phone">QR</button>
-      {open && (
-        <div role="dialog" aria-label="QR code" style={{ position: 'absolute', right: 0, top: '120%', background: 'var(--bg)', border: '1px solid var(--border)', padding: 8 }}>
-          {/* Simple fallback: use Google Chart API avoided; render text URL for now. If a QR lib is allowed, we can integrate it later. */}
-          <div style={{ fontSize: 12, maxWidth: 220 }}>Scan this URL on your phone:</div>
-          <div style={{ fontSize: 12, color: 'var(--muted)' }}>{url}</div>
+    <details className="qr-wrap" open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
+      <summary className="small-btn" aria-label="Show QR to open on phone">QR</summary>
+      <div role="dialog" aria-label="QR code" className="qr-popover">
+        <div className="qr-text">Scan this with your phone:</div>
+        <div className="qr-box">
+          <QRCode value={url} size={128} />
         </div>
-      )}
-    </div>
+      </div>
+    </details>
   );
 };
 

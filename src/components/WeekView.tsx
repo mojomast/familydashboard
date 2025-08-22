@@ -11,32 +11,52 @@ export const WeekView: React.FC<{
   onDelete?: (taskId: string) => void;
   onAdd?: (category: 'meals' | 'chores' | 'other', dateIso: string) => void;
   mode?: 'rows' | 'columns';
-}> = ({ tasks, weekStart, onEdit, onDelete, onAdd, mode = 'columns' }) => {
+  daysCount?: number;
+}> = ({ tasks, weekStart, onEdit, onDelete, onAdd, mode = 'columns', daysCount = 5 }) => {
   const start = weekStart ?? new Date();
   start.setHours(0, 0, 0, 0);
 
-  // Always show the next 5 days for the dashboard; rows/columns only change layout
-  const daysCount = 5;
-  const days: Date[] = [];
-  for (let i = 0; i < daysCount; i++) {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    days.push(d);
-  }
+  const days: Date[] = React.useMemo(() => {
+    const arr: Date[] = [];
+    for (let i = 0; i < daysCount; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      arr.push(d);
+    }
+    return arr;
+  }, [start.getTime(), daysCount]);
 
   const dal = createDAL();
   const [notesStore, setNotesStore] = useState<Record<string, string>>({});
+  const [catNames, setCatNames] = useState<Record<'meals'|'chores'|'other', string>>({ meals: 'Meals', chores: 'Chores', other: 'Other' });
   useEffect(() => {
     // Preload notes for visible days
     (async () => {
       const entries: Record<string, string> = {};
-      for (const d of days) {
+  for (const d of days) {
         const iso = d.toISOString().slice(0, 10);
         try { entries[iso] = await dal.getNote(iso); } catch { entries[iso] = ''; }
       }
       setNotesStore(entries);
     })();
-  }, []);
+  }, [dal, daysCount, weekStart]);
+  useEffect(() => {
+    (async () => {
+      try {
+        const cats = await dal.getCategories();
+    const names: Record<'meals'|'chores'|'other', string> = { meals: 'Meals', chores: 'Chores', other: 'Other' };
+        for (const c of cats) names[c.key] = c.name || names[c.key];
+        setCatNames(names);
+        // apply colors to CSS variables at root for theming
+        const root = document.documentElement;
+        for (const c of cats) {
+          if (c.bg) root.style.setProperty(`--cat-${c.key}-bg`, c.bg);
+          if (c.fg) root.style.setProperty(`--cat-${c.key}-fg`, c.fg);
+          if (c.border) root.style.setProperty(`--cat-${c.key}-border`, c.border);
+        }
+      } catch { /* ignore */ }
+    })();
+  }, [dal]);
 
   // expanded state per day (notes visible). Default to true when a note exists, false otherwise.
   const initialExpanded: Record<string, boolean> = {};
@@ -50,9 +70,9 @@ export const WeekView: React.FC<{
     <div>
       {mode === 'rows' && (
         <div className="column-headers">
-          <div className="col-header col-meals">Meals</div>
-          <div className="col-header col-chores">Chores</div>
-          <div className="col-header col-other">Other</div>
+          <div className="col-header col-meals">{catNames.meals}</div>
+          <div className="col-header col-chores">{catNames.chores}</div>
+          <div className="col-header col-other">{catNames.other}</div>
         </div>
       )}
       <div className={mode === 'columns' ? 'dashboard-grid' : 'week-rows'}>
@@ -91,7 +111,7 @@ export const WeekView: React.FC<{
                   defaultValue={notesStore[iso] ?? ''}
                   onBlur={async (e) => {
                     const v = e.currentTarget.value;
-                    try { await dal.saveNote(iso, v); } catch { /* ignore */ }
+                    try { await dal.saveNote(iso, v); } catch (err) { console.warn('saveNote failed', err); }
                     setNotesStore((s) => {
                       const next = { ...s };
                       if (v.trim()) next[iso] = v; else delete next[iso];
@@ -105,7 +125,7 @@ export const WeekView: React.FC<{
               <div className="day-footer">
                 <button
                   className="note-toggle-bottom"
-                  aria-expanded={expanded[iso]}
+                  aria-expanded={expanded[iso] ? 'true' : 'false'}
                   title="Toggle notes"
                   onClick={() => setExpanded((s) => ({ ...s, [iso]: !s[iso] }))}
                 >＋</button>

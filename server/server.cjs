@@ -53,6 +53,19 @@ CREATE TABLE IF NOT EXISTS groceries (
   done INTEGER DEFAULT 0,
   meal_task_id TEXT
 );
+
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+  key TEXT PRIMARY KEY, -- e.g., meals, chores, other
+  name TEXT NOT NULL,
+  bg TEXT,  -- background color
+  fg TEXT,  -- text color
+  border TEXT -- border color
+);
 `);
 
 // Helpers
@@ -237,4 +250,45 @@ app.get('/api/health', (req, res) => ok(res, { status: 'ok' }));
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
   console.log(`Family Dashboard API listening on http://localhost:${port}`);
+});
+
+// Seed default categories if missing
+try {
+  const existing = db.prepare('SELECT COUNT(*) as c FROM categories').get();
+  if (!existing || existing.c === 0) {
+    const ins = db.prepare('INSERT INTO categories (key, name, bg, fg, border) VALUES (@key,@name,@bg,@fg,@border)');
+    ins.run({ key: 'meals', name: 'Meals', bg: '#fff8f6', fg: '#8b3d2e', border: '#ffe6dc' });
+    ins.run({ key: 'chores', name: 'Chores', bg: '#f6fff8', fg: '#2a7f48', border: '#dcffdf' });
+    ins.run({ key: 'other', name: 'Other', bg: '#f3f2ff', fg: '#4a2e8f', border: '#ebe9ff' });
+  }
+} catch {}
+
+// Settings endpoints
+app.get('/api/settings/:key', (req, res) => {
+  const { key } = req.params;
+  const row = db.prepare('SELECT value FROM settings WHERE key=?').get(key);
+  ok(res, { key, value: row ? row.value : null });
+});
+app.put('/api/settings/:key', (req, res) => {
+  const { key } = req.params;
+  const { value } = req.body || {};
+  const exists = db.prepare('SELECT 1 FROM settings WHERE key=?').get(key);
+  if (exists) db.prepare('UPDATE settings SET value=? WHERE key=?').run(String(value ?? ''), key);
+  else db.prepare('INSERT INTO settings (key, value) VALUES (?,?)').run(key, String(value ?? ''));
+  ok(res, true);
+});
+
+// Categories endpoints
+app.get('/api/categories', (req, res) => {
+  const rows = db.prepare('SELECT key, name, bg, fg, border FROM categories ORDER BY key').all();
+  ok(res, rows);
+});
+app.put('/api/categories/:key', (req, res) => {
+  const { key } = req.params;
+  const { name, bg, fg, border } = req.body || {};
+  const info = db.prepare('UPDATE categories SET name=COALESCE(?, name), bg=COALESCE(?, bg), fg=COALESCE(?, fg), border=COALESCE(?, border) WHERE key=?')
+    .run(name ?? null, bg ?? null, fg ?? null, border ?? null, key);
+  if (info.changes === 0) return bad(res, 'Not found', 404);
+  const row = db.prepare('SELECT key, name, bg, fg, border FROM categories WHERE key=?').get(key);
+  ok(res, row);
 });

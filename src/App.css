@@ -116,9 +116,9 @@ main {
   border: 1px solid transparent;
   min-height: 0;
 }
-.col-meals { background: #fff8f6; color: #8b3d2e; border: 1px solid #ffe6dc; }
-.col-chores { background: #f6fff8; color: #2a7f48; border: 1px solid #dcffdf; }
-.col-other { background: #f3f2ff; color: #4a2e8f; border: 1px solid #ebe9ff; }
+.col-meals { background: var(--cat-meals-bg, #fff8f6); color: var(--cat-meals-fg, #8b3d2e); border: 1px solid var(--cat-meals-border, #ffe6dc); }
+.col-chores { background: var(--cat-chores-bg, #f6fff8); color: var(--cat-chores-fg, #2a7f48); border: 1px solid var(--cat-chores-border, #dcffdf); }
+.col-other { background: var(--cat-other-bg, #f3f2ff); color: var(--cat-other-fg, #4a2e8f); border: 1px solid var(--cat-other-border, #ebe9ff); }
 
 .column-cell.col-meals { background: rgba(255,236,230,0.4); }
 .column-cell.col-chores { background: rgba(230,255,236,0.4); }
@@ -248,6 +248,10 @@ main {
   padding: 4px 8px;
   font-size: 12px;
 }
+.btn-group-header { position: absolute; right: 12px; top: 8px; display: flex; gap: 6px; }
+.w-100 { width: 100%; }
+.container-sm { max-width: 600px; margin: 12px auto; }
+.text-center { text-align: center; }
 
 /* floating editor when creating a new task from the dashboard */
 .editor-floating {
@@ -373,6 +377,50 @@ textarea.day-note {
   color: var(--muted);
 }
 
+/* ActionMenu dropdown */
+.menu { position: relative; display: inline-block; }
+.menu-trigger {
+  list-style: none; /* hide default marker */
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 8px;
+  width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  padding: 0; margin: 0;
+}
+.menu-trigger::-webkit-details-marker { display: none; }
+.menu[open] .menu-trigger { background: var(--bg); box-shadow: 0 6px 20px rgba(0,0,0,0.10); }
+.menu-popover {
+  position: absolute; right: 0; top: calc(100% + 6px);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-width: 160px;
+  padding: 6px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+  z-index: 60;
+}
+.menu-item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 0.92em;
+}
+.menu-item:hover { background: var(--surface); }
+.menu-item:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Modal backdrop for floating editor */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 30;
+}
+
 /* Responsive layout */
 @media (max-width: 900px) {
   .dashboard-grid { grid-template-columns: 1fr; height: auto; }
@@ -380,5 +428,27 @@ textarea.day-note {
   .day-columns { grid-template-columns: 1fr; }
 }
 
+/* Center the create task dialog on small screens */
+@media (max-width: 640px) {
+  .editor-floating {
+    left: 50%; right: auto; top: 50%; bottom: auto;
+    transform: translate(-50%, -50%);
+    width: calc(100vw - 32px);
+    max-width: 420px;
+  }
+}
+
 /* utilities */
 .hstack-6 { display: flex; gap: 6px; align-items: center; }
+.qr-wrap { position: relative; }
+.qr-popover { position: absolute; right: 0; top: 120%; background: var(--bg); border: 1px solid var(--border); padding: 8px; border-radius: 6px; }
+.qr-text { font-size: 12px; max-width: 220px; }
+.qr-subtext { font-size: 12px; color: var(--muted); }
+.qr-box { background: #fff; padding: 8px; border-radius: 6px; }
+
+/* TaskEditor styles moved from inline to classes */
+.task-editor { border: 1px solid #ddd; padding: 8px; margin-bottom: 12px; background: var(--bg); }
+.ml-8 { margin-left: 8px; }
+.mt-8 { margin-top: 8px; }
+.flex-gap-8 { display: flex; gap: 8px; }
+.fs-12 { font-size: 12px; }

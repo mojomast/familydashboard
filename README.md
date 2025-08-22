@@ -1,87 +1,81 @@
+# dashboardussy
 
-    # dashboardussy
+<p align="center">
+  <a href="https://github.com/mojomast/familydashboard"><img alt="repo size" src="https://img.shields.io/github/repo-size/mojomast/familydashboard?color=informational" /></a>
+  <img alt="status" src="https://img.shields.io/badge/status-WIP-orange" />
+  <img alt="license" src="https://img.shields.io/badge/license-MIT-lightgrey" />
+</p>
 
-    dashboardussy is a small React + TypeScript + Vite application for managing family-style tasks, meal planning, and a weekly dashboard view. This repository contains the app source and minimal tooling to run, build, and test locally.
+dashboardussy is a compact, opinionated React + TypeScript app for family planning: weekly tasks, meal planning, and simple grocery lists.
 
-    Author: Kyle Durepos
+Quick tags:
 
-    Key features
+<p>
+  <img alt="React" src="https://img.shields.io/badge/React-19.1.1-61DAFB?logo=react&logoColor=white" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript&logoColor=white" />
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-7.x-646cff?logo=vite&logoColor=white" />
+  <img alt="Express" src="https://img.shields.io/badge/Express-4.x-000000?logo=express&logoColor=white" />
+  <img alt="SQLite" src="https://img.shields.io/badge/SQLite-better--sqlite3-003B57?logo=sqlite&logoColor=white" />
+</p>
 
-    - Weekly dashboard view (calendar-like week) with tasks and quick add
-    - Meal planner view with per-day meal entries
-    - Task editor for creating, updating and deleting tasks
-    - Local persistence (simple storage layer)
+---
 
-    Tech stack
+## Highlights
 
-    - React 19 + TypeScript
-    - Vite as the dev server and build tool
-    # Family Dashboard
+- Weekly dashboard with quick-add per day/category
+- Meal planner for the coming week with attachable grocery items
+- One-off and recurring weekly tasks with per-instance completion
+- Pluggable Data Access Layer (localStorage adapter + backend API)
+- Accessibility-focused components (ActionMenu), theming, responsive layout
 
-    Family Dashboard is a small React + TypeScript + Vite application for managing family tasks, weekly planning, and meals.
+## Quickstart (development)
 
-    Author: Kyle Durepos
+Open PowerShell and run:
 
-    ## Features
+```powershell
+cd C:\Users\kyle\projects\familydashboard
+npm install
+# optional: start the backend (recommended for full feature set)
+npm run server
+# in another shell: start the frontend dev server
+npm run dev
+```
 
-    - Weekly dashboard view with quick-add per day/category
-    - Meal planner for the next 7 days
-    - Task editor for one-off and recurring weekly tasks
-    - Local persistence via a simple storage layer
+The frontend runs at the Vite URL (usually http://localhost:5173). The dev server proxies `/api` to the backend at http://localhost:3001.
 
-    ## Tech stack
+## Build
 
-    - React 19 + TypeScript
-    - Vite dev server and build
-    - Vitest for unit tests
-    - ESLint + Prettier
+```powershell
+npm run build
+```
 
-    ## Quick start (development)
+## Tests
 
-    ```powershell
-    cd c:\Users\kyle\projects\familydashboard
-    npm install
-    npm run dev
-    ```
+```powershell
+npx vitest run --reporter verbose
+```
 
-    Vite will print a local URL you can open in your browser.
+## Project layout
 
-    ## Build for production
+- `src/` — React app source
+  - `components/` — UI components (WeekView, TaskList, TaskEditor, MealPlanner)
+  - `lib/` — recurrence logic, DAL, storage helpers
+  - `data/` — sample fixtures
+- `server/` — development Express + SQLite server (dev only)
+- `devplan.md` — roadmap and implementation notes
 
-    ```powershell
-    npm run build
-    ```
+## Progress (latest)
 
-    ## Run tests
+- Backend scaffolded: Express + SQLite endpoints for tasks, completions, notes, groceries, categories, and settings.
+- DAL implemented: pluggable `src/lib/dal.ts` with backend and local adapters.
+- UI polish: accessible ActionMenu dropdown for task actions, modal backdrop, and mobile-centered create-task dialog.
+- Features added: per-day grocery lists, QR share button, and settings to edit categories + toggle 5/7 day week.
+- Safety: lint and type fixes; added a small `scripts/run-and-log.ps1` helper and `.assistant/PAUSE.md` to support pause/continue runs.
 
-    ```powershell
-    npx vitest run --reporter verbose
-    ```
+See `devplan.md` for the full roadmap and detailed status updates.
 
-    ## Project layout
+## Notes
 
-    - `src/` — React app source
-      - `App.tsx` — main app and tabs
-      - `components/` — `WeekView`, `MealPlanner`, `TaskEditor`, `TaskList`
-      - `lib/` — recurrence logic and storage helpers
-      - `data/sampleTasks.ts` — sample data used when storage is empty
-    - `index.html` — Vite entry HTML
-    - `package.json` — scripts and deps
+- This project is a work-in-progress. The backend in `server/` is intended for local development and prototyping; it is not hardened for production.
+- The DAL keeps the app pluggable: add methods to `IDataAccess` and implement in both adapters to extend storage capabilities.
 
-    ## Roadmap (Phase 2 highlights)
-
-    Planned improvements (see `devplan.md` for details):
-
-    - SQLite-backed data layer (client-side WASM or backend service), with migration from localStorage
-    - Visual polish via Tailwind/Radix or Mantine; accessibility and theming (light/dark)
-    - Customizable categories, labels, and colors; tags and assignees
-    - Improved schedule planning (multi-week views, drag-and-drop, ICS export)
-    - Meal-linked grocery checklists and reusable meal templates
-    - Mobile-friendly responsive layout, PWA support and offline mode
-    - QR code button to open the app on a phone quickly
-    - Expanded tests and CI
-
-    ## Notes
-
-    - Current persistence uses localStorage (`src/lib/storage.ts`). Migration tooling will move your data to SQLite when enabled.
-    - Feedback and feature requests are welcome. Check `devplan.md` for progress.

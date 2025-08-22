@@ -11,7 +11,7 @@ export const GroceryList: React.FC<{ dateIso: string; mealTaskId?: string }>
     (async () => {
       try { setItems(await dal.listGroceries(dateIso)); } catch { setItems([]); }
     })();
-  }, [dateIso]);
+  }, [dateIso, dal]);
 
   const add = async () => {
     const label = text.trim();

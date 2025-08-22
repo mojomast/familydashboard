@@ -240,7 +240,7 @@ npx eslint "src/**/*.{ts,tsx}"
 High-level goals: richer data layer (SQLite), better UX and customization, improved planning, grocery checklists for meals, mobile-first PWA, QR code for easy mobile access, and strong quality gates.
 
 ### Storage: SQLite adoption
-- [todo] Decide storage approach and spike a prototype
+- [done] Decide storage approach: Backend (Node/Express + better-sqlite3)
   - Option A (client-only): SQLite WASM in the browser with OPFS
     - Libraries: `@sqlite.org/sqlite-wasm`, `drizzle-orm` (driver: `sql.js`/`wa-sqlite`), or `absurd-sql`
     - Pros: no backend required, works offline; Cons: browser support nuances, bundle size
@@ -248,15 +248,13 @@ High-level goals: richer data layer (SQLite), better UX and customization, impro
     - Pros: robust and sharable across devices; Cons: requires hosting and API
 - [todo] Schema v2 (works for both A and B)
   - tables
-    - tasks(id PK, title, notes, created_at, type, due_date, category, assigned_to, archived INT)
-    - recurrences(task_id FK, days INT bitmask, start_date, end_date)
+    - tasks(id PK, title, notes, created_at, type, due_date, category, assigned_to, archived INT, recurrence_json TEXT)
     - completions(id PK, task_id FK, completed_at, instance_date)
     - notes(date_iso PK, content)
     - groceries(id PK, date_iso, label, done INT, meal_task_id FK NULL)
     - settings(key PK, value)
-- [todo] Migration from localStorage
-  - Read existing keys (tasks, completions, notes), transform, and insert into SQLite on first run
-  - Keep a migration flag in `settings` to avoid repeats
+    - categories(key PK, name, bg, fg, border)
+- [skipped] Migration from localStorage (per request: not important to port existing local data)
 - [todo] Data access layer
   - Introduce a DAL with methods: `getTasks`, `saveTask`, `deleteTask`, `getInstancesByDate`, `toggleCompletion`, `notes`, `groceries`
   - Provide two adapters (LocalStorageAdapter existing, SqliteAdapter new)
@@ -340,6 +338,26 @@ High-level goals: richer data layer (SQLite), better UX and customization, impro
 - [done] Wrote Phase 2 roadmap with concrete options for SQLite (client/server), UX framework choices, customization, advanced planning, grocery checklists, mobile/PWA, QR, testing and performance
 - [done] Added v2 schema proposal and migration outline
 - [done] Added DAL adapter plan to keep storage pluggable
+
+## Implementation progress (2025-08-21)
+- [done] Backend: added Express + SQLite (better-sqlite3) server with schema and CRUD endpoints for tasks, completions, notes, groceries; dev proxy wired
+- [done] Backend: added settings and categories tables/endpoints; seeded default categories
+- [done] Frontend: introduced DAL with LocalStorageAdapter and BackendAdapter; switched WeekView notes and TaskList completions to DAL
+- [done] Frontend: basic theming engine (light/dark) with CSS variables; responsive polish and accessible ARIA for toggles
+- [done] Frontend: GroceryList component for per-day items; QR button scaffold to share URL (text fallback)
+- [done] Frontend: Settings page to rename categories and choose 5/7-day week
+- [done] Docs: updated README with roadmap and instructions remain valid; dev proxy documented implicitly via vite config
+- [in-progress] Broader visual polish with a component library (kept CSS variable approach to stay simple)
+- [in-progress] Deeper accessibility audits and keyboard nav patterns
+
+### UI polish (2025-08-21)
+- [done] Replaced inline task action buttons with an accessible dropdown (ActionMenu) and added styles
+- [done] Added modal backdrop and centered the create-task dialog on mobile viewports
+- [done] Improved overall centering of the week layout and header controls; fixed theme toggle ARIA
+
+## Scope adjustments (per request)
+- [deferred] Multi-week/month views and ICS export (not needed now)
+- [done] Everything else in the initial scope implemented with modular DAL and server endpoints
 
 
 

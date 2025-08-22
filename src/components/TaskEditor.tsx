@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Task, Recurrence } from '../types';
+import type { Task } from '../types';
 import { addTask } from '../lib/storage';
 
 type Props = {
@@ -18,17 +18,17 @@ export const TaskEditor: React.FC<Props> = ({ onCreate, initial = null, onUpdate
   const [title, setTitle] = useState(initial?.title ?? '');
   const [type, setType] = useState<'one-off' | 'recurring'>(initial?.type ?? 'one-off');
   const [dueDate, setDueDate] = useState(initial?.dueDate ?? '');
-  const [category, setCategory] = useState<'meals' | 'chores' | 'other'>((initial as any)?.category ?? 'other');
+  const [category, setCategory] = useState<'meals' | 'chores' | 'other'>(initial?.category as 'meals'|'chores'|'other' ?? 'other');
   const [days, setDays] = useState<number[]>(initial?.recurrence?.days ?? [1]);
 
   const toggleDay = (d: number) => {
     setDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]));
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!title.trim()) return;
-    const isEdit = Boolean(initial && (initial as any).id);
+  const isEdit = Boolean(initial && 'id' in (initial as Record<string, unknown>));
 
     const base: Task = isEdit
       ? { ...(initial as Task), title: title.trim(), type, category }
@@ -45,11 +45,8 @@ export const TaskEditor: React.FC<Props> = ({ onCreate, initial = null, onUpdate
     if (isEdit && onUpdate) onUpdate(base);
     else {
       // persist immediately and notify parent
-      try {
-        addTask(base);
-        // notify app to reload tasks (in case parent didn't update state)
-        try { window.dispatchEvent(new CustomEvent('familydashboard:task-added', { detail: base.id })); } catch (e) { /* ignore */ }
-      } catch (e) { /* ignore */ }
+  try { addTask(base); } catch { /* ignore */ }
+  try { window.dispatchEvent(new CustomEvent('familydashboard:task-added', { detail: base.id })); } catch { /* ignore */ }
       onCreate(base);
     }
 
@@ -60,12 +57,12 @@ export const TaskEditor: React.FC<Props> = ({ onCreate, initial = null, onUpdate
   };
 
   return (
-    <form onSubmit={submit} style={{ border: '1px solid #ddd', padding: 8, marginBottom: 12 }}>
+    <form onSubmit={submit} className="task-editor">
       <h4>Create Task</h4>
       <div>
         <label>
           Category:
-          <select value={category} onChange={(e) => setCategory(e.target.value as any)} style={{ marginLeft: 8 }}>
+          <select value={category} onChange={(e) => setCategory(e.target.value as 'meals'|'chores'|'other')} className="ml-8">
             <option value="meals">Meals</option>
             <option value="chores">Chores</option>
             <option value="other">Other</option>
@@ -80,7 +77,7 @@ export const TaskEditor: React.FC<Props> = ({ onCreate, initial = null, onUpdate
       <div>
         <label>
           Type:
-          <select value={type} onChange={(e) => setType(e.target.value as any)}>
+          <select value={type} onChange={(e) => setType(e.target.value as 'one-off'|'recurring')}>
             <option value="one-off">One-off</option>
             <option value="recurring">Recurring (weekly)</option>
           </select>
@@ -94,11 +91,11 @@ export const TaskEditor: React.FC<Props> = ({ onCreate, initial = null, onUpdate
           </label>
         </div>
       ) : (
-        <div>
+  <div>
           <div>Days:</div>
-          <div style={{ display: 'flex', gap: 8 }}>
+    <div className="flex-gap-8">
             {weekdayLabels.map((lab, idx) => (
-              <label key={idx} style={{ fontSize: 12 }}>
+        <label key={idx} className="fs-12">
                 <input type="checkbox" checked={days.includes(idx)} onChange={() => toggleDay(idx)} /> {lab}
               </label>
             ))}
@@ -106,7 +103,7 @@ export const TaskEditor: React.FC<Props> = ({ onCreate, initial = null, onUpdate
         </div>
       )}
 
-      <div style={{ marginTop: 8 }}>
+      <div className="mt-8">
         <button type="submit">Create</button>
       </div>
     </form>
