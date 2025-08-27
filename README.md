@@ -1,12 +1,12 @@
-# dashboardussy
+# familydashboardussy
 
 <p align="center">
-  <a href="https://github.com/mojomast/familydashboard"><img alt="repo size" src="https://img.shields.io/github/repo-size/mojomast/familydashboard?color=informational" /></a>
+  <a href="https://github.com/mojomast/familydashboardussy"><img alt="repo size" src="https://img.shields.io/github/repo-size/mojomast/familydashboardussy?color=informational" /></a>
   <img alt="status" src="https://img.shields.io/badge/status-WIP-orange" />
   <img alt="license" src="https://img.shields.io/badge/license-MIT-lightgrey" />
 </p>
 
-dashboardussy is a compact, opinionated React + TypeScript app for family planning: weekly tasks, meal planning, and simple grocery lists.
+familydashboardussy is a compact, opinionated React + TypeScript app for family planning: weekly tasks, meal planning, and simple grocery lists.
 
 Quick tags:
 
